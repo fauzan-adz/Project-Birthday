@@ -6,7 +6,6 @@ import Section2 from './components/section/Section2';
 import Section3 from './components/section/Section3';
 import Section4 from './components/section/Section4';
 
-
 export default function App() {
     const [isLoading, setIsLoading] = useState(true);
 

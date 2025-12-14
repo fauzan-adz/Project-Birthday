@@ -1,4 +1,4 @@
-// Section2.tsx (SETELAH DIMODIFIKASI UNTUK PLAY/PAUSE)
+// Section2.tsx (RESOLVED: Menggabungkan perbaikan TS dan Background Putih)
 import { useState, useEffect } from "react";
 
 export default function Section2() {
@@ -6,8 +6,7 @@ export default function Section2() {
   const [isOpened, setIsOpened] = useState(true);
   // State BARU untuk Music Player
   const [music, setMusic] = useState<HTMLAudioElement | null>(null);
-  // State untuk melacak apakah musik sudah pernah diinisialisasi
-  const [isMusicInitialized, setIsMusicInitialized] = useState(false); // Ganti isMusicPlayed menjadi isMusicInitialized
+  // State isMusicInitialized telah dihapus karena tidak digunakan
 
   // 1. Inisialisasi Audio saat komponen mounting
   useEffect(() => {
@@ -15,7 +14,7 @@ export default function Section2() {
     audio.loop = true;
     audio.volume = 0.7;
     setMusic(audio);
-    setIsMusicInitialized(true); // Tandai sudah diinisialisasi
+    // Penggunaan setIsMusicInitialized(true) dihapus karena tidak digunakan
 
     return () => {
       // Cleanup: hentikan musik saat komponen di-unmount
@@ -34,34 +33,29 @@ export default function Section2() {
   const handleToggle = () => {
     // Ubah state buka/tutup kartu
     setIsOpened(!isOpened);
-    
-    // Logika Play / Pause Musik
-    if (music) {
-        // Cek status paused dari elemen audio
-        if (music.paused) {
-            // Jika musik sedang PAUSE, maka PLAY
-            music.play().catch(error => {
-                console.warn("Play failed:", error);
-            });
-        } else {
-            // Jika musik sedang PLAY, maka PAUSE
-            music.pause();
-        }
-    }
+    
+    // Logika Play / Pause Musik (TETAP SAMA)
+    if (music) {
+        // Cek status paused dari elemen audio
+        if (music.paused) {
+            // Jika musik sedang PAUSE, maka PLAY
+            music.play().catch(error => {
+                console.warn("Play failed:", error);
+            });
+        } else {
+            // Jika musik sedang PLAY, maka PAUSE
+            music.pause();
+        }
+    }
   };
 
 
   return (
     <section
-      className="relative w-full h-[130vh] overflow-hidden"
+      className="relative w-full h-[130vh] overflow-hidden bg-[#FFFFFE]" // <-- BG PUTIH DI SINI
       id="section2"
     >
-      {/* Background Image */}
-      <img
-        src="/Awan4.png"
-        alt="Background Cloud"
-        className="absolute inset-0 w-full h-full object-cover z-0"
-      />
+      {/* Background Image: DIHAPUS */}
 
       {/* Main Container: Centering Cards & Nav */}
       <div className="absolute inset-0 z-10 flex flex-col justify-center items-center pointer-events-none">
@@ -115,6 +109,7 @@ export default function Section2() {
         >
             <img src="/btn-kecil.png" alt="tombol" />
         </button>
+        
       </div>
     </section>
   );
