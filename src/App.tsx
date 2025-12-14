@@ -5,7 +5,7 @@ import Section4 from "./components/section/Section4";
 import "./App.css";
 
 function App() {
-  
+   
   return (
     <div className="overflow-x-hidden">
       <Section1 />
