@@ -1,5 +1,5 @@
 // Section4.tsx
-import { useState, useRef } from 'react';
+import { useState, useRef, useLayoutEffect } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -11,12 +11,17 @@ export default function Section4() {
     
     const [showUcapanCard, setShowUcapanCard] = useState(false);
     
+    // Refs untuk Tombol "TIDAK"
     const noButtonRef = useRef<HTMLImageElement>(null); 
     const buttonContainerRef = useRef<HTMLDivElement>(null);
     const sectionRef = useRef<HTMLElement>(null); 
 
+    // Ref BARU untuk Kartu Ucapan
+    const ucapanCardRef = useRef<HTMLDivElement>(null);
+
 
     const handleNoClick = () => {
+        // ... (Logika tombol TIDAK tetap sama) ...
         const buttonElement = noButtonRef.current;
         const containerElement = buttonContainerRef.current;
         
@@ -40,9 +45,40 @@ export default function Section4() {
             ease: "power1.out"
         });
     };
+    
     const handleYesClick = () => {
+        // Hanya ubah state. Animasi akan ditangani di useLayoutEffect.
         setShowUcapanCard(true);
     };
+
+
+    // --- LOGIKA ANIMASI KARTU UCAPAN MENGGUNAKAN GSAP ---
+    useLayoutEffect(() => {
+        if (showUcapanCard && ucapanCardRef.current) {
+            // GSAP Context untuk mengisolasi animasi ini
+            const ctx = gsap.context(() => {
+                // 1. Set state awal (opacity 0 dan scale kecil)
+                gsap.set(ucapanCardRef.current, {
+                    opacity: 0,
+                    scale: 0.8,
+                    y: 20 // Sedikit geser dari bawah
+                });
+
+                // 2. Animasikan ke state akhir (opacity 1 dan scale normal)
+                gsap.to(ucapanCardRef.current, {
+                    opacity: 1,
+                    scale: 1,
+                    y: 0,
+                    duration: 1.0, // Durasi animasi
+                    ease: "power3.out", // Efek yang bagus
+                    delay: 0.1 // Sedikit jeda setelah state berubah
+                });
+            }, ucapanCardRef);
+
+            return () => ctx.revert();
+        }
+    }, [showUcapanCard]); // Efek dijalankan hanya saat showUcapanCard menjadi true
+
 
     return (
         <section 
@@ -56,9 +92,8 @@ export default function Section4() {
             <div className="w-full max-w-2xl relative z-30 flex flex-col items-center justify-center ">
 
                 {!showUcapanCard ? (
-                    // --- TAMPILAN PERTANYAAN & GAMBAR TOMBOL ---
+                    // --- TAMPILAN PERTANYAAN & GAMBAR TOMBOL (Saat showUcapanCard = false) ---
                     <>
-                        {/* 1. Gambar Pertanyaan (/pertanyaan.png) */}
                         <div className="mb-10 text-center">
                             <img 
                                 src="/pertanyaan.png" 
@@ -67,7 +102,6 @@ export default function Section4() {
                             />
                         </div>
 
-                        {/* Kontainer Tombol (Area Lompatan Tombol TIDAK) */}
                         <div 
                             ref={buttonContainerRef}
                             className="relative w-full h-20 rounded-xl" 
@@ -93,7 +127,6 @@ export default function Section4() {
                                 src="/tidak.png" 
                                 alt="Tombol TIDAK"
                                 onClick={handleNoClick}
-                                // Gunakan w-[180px] untuk proporsi yang sama
                                 className="cursor-pointer transition duration-100 hover:scale-[1.02] active:scale-[0.98] z-50 w-[180px]"
                                 style={{ 
                                     position: 'absolute', 
@@ -105,8 +138,12 @@ export default function Section4() {
                         </div>
                     </>
                 ) : (
-                    // --- TAMPILAN KARTU UCAPAN (Setelah klik IYA) ---
-                    <div className="text-center transition-opacity duration-700 ease-in max-w-lg mx-auto">
+                    // --- TAMPILAN KARTU UCAPAN (Saat showUcapanCard = true) ---
+                    <div 
+                        ref={ucapanCardRef} // <-- Tambahkan ref di sini
+                        className="text-center max-w-lg mx-auto" 
+                        // Hapus class transisi CSS karena kita akan menggunakan GSAP
+                    >
                         <img 
                             src="/ucapan.png" 
                             alt="Kartu Ucapan"

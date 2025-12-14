@@ -1,4 +1,4 @@
-// Section2.tsx (VERSI PERBAIKAN UNTUK MENGHAPUS ERROR TS6133)
+// Section2.tsx (RESOLVED: Menggabungkan perbaikan TS dan Background Putih)
 import { useState, useEffect } from "react";
 
 export default function Section2() {
@@ -14,7 +14,7 @@ export default function Section2() {
     audio.loop = true;
     audio.volume = 0.7;
     setMusic(audio);
-    // setIsMusicInitialized(true); <-- HAPUS BARIS INI
+    // Penggunaan setIsMusicInitialized(true) dihapus karena tidak digunakan
 
     return () => {
       // Cleanup: hentikan musik saat komponen di-unmount
@@ -34,7 +34,7 @@ export default function Section2() {
     // Ubah state buka/tutup kartu
     setIsOpened(!isOpened);
     
-    // Logika Play / Pause Musik
+    // Logika Play / Pause Musik (TETAP SAMA)
     if (music) {
         // Cek status paused dari elemen audio
         if (music.paused) {
@@ -52,9 +52,11 @@ export default function Section2() {
 
   return (
     <section
-      className="relative w-full h-[130vh] overflow-hidden bg-[#FFFFFE]"
+      className="relative w-full h-[130vh] overflow-hidden bg-[#FFFFFE]" // <-- BG PUTIH DI SINI
       id="section2"
     >
+      {/* Background Image: DIHAPUS */}
+
       {/* Main Container: Centering Cards & Nav */}
       <div className="absolute inset-0 z-10 flex flex-col justify-center items-center pointer-events-none">
         

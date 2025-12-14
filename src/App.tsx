@@ -1,20 +1,30 @@
-import Section1 from "./components/section/Section1";
-import Section2 from "./components/section/Section2";
-import Section3 from "./components/section/Section3";
-import Section4 from "./components/section/Section4";
-import "./App.css";
+// App.tsx (atau di Layout komponen Anda)
+import { useState, useEffect } from 'react';
+import { Preloader } from './components/Preloading';
+import Section1 from './components/section/Section1';
+import Section2 from './components/section/Section2';
+import Section3 from './components/section/Section3';
+import Section4 from './components/section/Section4';
 
-function App() {
-  
-  return (
-    // Membungkus seluruh konten dengan overflow-x-hidden untuk mencegah scroll horizontal
-    <div className="overflow-x-hidden">
-      <Section1 />
-      <Section3 />
-      <Section4 />
-      <Section2 />
-    </div>
-  );
+export default function App() {
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 1500); 
+        return () => clearTimeout(timer);
+    }, []); 
+
+    return (
+        <>
+            <Preloader isLoading={isLoading} />
+            <main>
+                <Section1 />
+                <Section3 />
+                <Section4 />
+                <Section2 />
+            </main>
+        </>
+    );
 }
-
-export default App;
