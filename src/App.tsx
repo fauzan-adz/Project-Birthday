@@ -7,6 +7,7 @@ import "./App.css";
 function App() {
   
   return (
+    // Membungkus seluruh konten dengan overflow-x-hidden untuk mencegah scroll horizontal
     <div className="overflow-x-hidden">
       <Section1 />
       <Section3 />
