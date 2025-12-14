@@ -6,26 +6,34 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 // Registrasi Plugin GSAP
 gsap.registerPlugin(ScrollTrigger);
 
+// --- DATA IKON MELAYANG KHUSUS SECTION 3 ---
+const floatingObjects = [
+
+    { x: 10, y: 200, speed: 0.2, img: "/icon-1.png", size: 150, selector: ".floating-icon-1" },
+    { x: 80, y: 400, speed: 0.35, img: "/particle2.png", size: 120, selector: ".floating-icon-2" },
+    { x: -15, y: 900, speed: 0.25, img: "/particle3.png", size: 180, selector: ".floating-icon-3" },
+    { x: 50, y: 1400, speed: 0.4, img: "/particle1.png", size: 160, selector: ".floating-icon-4" },
+];
+
 const items = [
-    { id: "1", img: "/fotoGrid/1.jpg", height: 800, width: 600 }, // Rasio 1.5
-    { id: "2", img: "/fotoGrid/2.jpg", height: 900, width: 600 }, // Rasio 1.5
-    { id: "3", img: "/fotoGrid/3.jpg", height: 700, width: 600 }, // Rasio 1.5
-    { id: "4", img: "/fotoGrid/4.jpg", height: 650, width: 600 }, // Rasio 1.5
-    { id: "5", img: "/fotoGrid/5.jpg", height: 1000, width: 600 }, // Rasio 1.5
-    { id: "6", img: "/fotoGrid/6.jpg", height: 800, width: 600 }, // Rasio 1.5
-    { id: "7", img: "/fotoGrid/7.jpg", height: 750, width: 600 }, // Rasio 1.25
-    { id: "8", img: "/fotoGrid/8.jpg", height: 1000, width: 600 }, // Rasio 1.66
-    { id: "9", img: "/fotoGrid/9.jpg", height: 800, width: 600 }, // Rasio 1.33
-    { id: "10", img: "/fotoGrid/10.jpg", height: 700, width: 600 }, // Rasio 1.16
-    { id: "11", img: "/fotoGrid/11.jpg", height: 700, width: 600 }, // Rasio 1.16
-    { id: "12", img: "/fotoGrid/12.jpg", height: 700, width: 600 }, // Rasio 1.16
+    { id: "1", img: "/fotoGrid/1.jpg", height: 800, width: 600 }, 
+    { id: "2", img: "/fotoGrid/2.jpg", height: 900, width: 600 }, 
+    { id: "3", img: "/fotoGrid/3.jpg", height: 700, width: 600 }, 
+    { id: "4", img: "/fotoGrid/4.jpg", height: 650, width: 600 }, 
+    { id: "5", img: "/fotoGrid/5.jpg", height: 1000, width: 600 }, 
+    { id: "6", img: "/fotoGrid/6.jpg", height: 800, width: 600 }, 
+    { id: "7", img: "/fotoGrid/7.jpg", height: 750, width: 600 }, 
+    { id: "8", img: "/fotoGrid/8.jpg", height: 1000, width: 600 }, 
+    { id: "9", img: "/fotoGrid/9.jpg", height: 800, width: 600 }, 
+    { id: "10", img: "/fotoGrid/10.jpg", height: 700, width: 600 }, 
+    { id: "11", img: "/fotoGrid/11.jpg", height: 700, width: 600 }, 
+    { id: "12", img: "/fotoGrid/12.jpg", height: 700, width: 600 }, 
 ];
 
 interface Item { id: string; img: string; height: number; width: number; }
 interface GridItem extends Item { x: number; y: number; w: number; h: number; }
 
-// --- HOOKS & UTILITIES (Untuk Responsive & Pengukuran) ---
-
+// --- HOOKS & UTILITIES (useMedia & useMeasure tetap sama) ---
 const useMedia = (queries: string[], values: number[], defaultValue: number): number => {
     const get = () => {
         if (typeof window === 'undefined') return defaultValue;
@@ -54,10 +62,11 @@ const useMeasure = <T extends HTMLElement>() => {
     }, []);
     return [ref, size] as const;
 };
+// --- END HOOKS & UTILITIES ---
+
 
 export default function Section3() {
-    
-    // Konfigurasi Grid
+    // ... (Konfigurasi Grid dan useMemo Grid tetap sama) ...
     const isMobile = useMedia(['(max-width: 600px)'], [1], 0) === 1;
     const columns = useMedia(
         ['(min-width:1200px)', '(min-width:768px)', '(min-width:400px)'],
@@ -70,14 +79,10 @@ export default function Section3() {
     const [containerRef, { width }] = useMeasure<HTMLDivElement>();
     const [isReady, setIsReady] = useState(false);
     const sectionRef = useRef<HTMLElement>(null); 
+    const floatingWrapperRef = useRef<HTMLDivElement>(null); // Ref untuk wrapper ikon melayang
 
-    // Preload & State Ready
-    useEffect(() => {
-        // Logika preload disederhanakan karena menggunakan path lokal
-        setIsReady(true);
-    }, []);
+    useEffect(() => { setIsReady(true); }, []);
 
-    // Logika Masonry Grid (Menghitung posisi X, Y, W, H)
     const grid = useMemo<GridItem[]>(() => {
         if (!width) return [];
         
@@ -90,23 +95,16 @@ export default function Section3() {
             const x = col * (columnWidth + gap);
             const y = colHeights[col];
             
-            // Hitung tinggi berdasarkan Aspect Ratio
             const aspectRatio = child.height / child.width;
             const height = columnWidth * aspectRatio;
 
             colHeights[col] += height + gap;
             
-            return { 
-                ...child, 
-                x, 
-                y, 
-                w: columnWidth, 
-                h: height 
-            };
+            return { ...child, x, y, w: columnWidth, h: height };
         });
     }, [columns, width, gap]);
 
-    // --- LOGIKA ANIMASI SCROLL SCRUBBING STAGGERED ---
+    // --- LOGIKA ANIMASI GSAP DENGAN PARALLAX IKON ---
     useLayoutEffect(() => {
         if (!isReady || grid.length === 0) return;
 
@@ -114,42 +112,51 @@ export default function Section3() {
 
         const ctx = gsap.context(() => {
             
-            // 1. Timeline utama yang dikontrol oleh ScrollTrigger
-            const tl = gsap.timeline({
+            // 1. Timeline untuk Grid (Fade-in staggered) - (Logika tetap sama)
+            const tlGrid = gsap.timeline({
                 scrollTrigger: {
-                    trigger: containerRef.current, // Kontainer grid adalah pemicu
-                    start: "top bottom",          
-                    end: "bottom center",         
-                    scrub: true,                  // Scrubbing: Mengikat animasi ke progres scroll
+                    trigger: containerRef.current,
+                    start: "top bottom", 
+                    end: "bottom center",
+                    scrub: true,
                 }
             });
 
-            // 2. Loop dan Tambahkan animasi Fade-in ke Timeline
             grid.forEach((item, index) => { 
                 const selector = `[data-key="${item.id}"]`;
-                
-                // Set posisi Grid (target) dan opacity awal 0
-                gsap.set(selector, { 
-                    x: item.x, 
-                    y: item.y,
-                    width: item.w, 
-                    height: item.h,
-                    opacity: 0,
-                    scale: 0.95, // Sedikit zoom-in saat muncul
-                });
-
-                // Tambahkan animasi Fade-in ke Timeline
-                tl.to(selector, 
-                    {
-                        opacity: 1, 
-                        scale: 1, 
-                        ease: "none",
-                    },
-                    index * 0.1 // Kunci Stagger: Jeda 0.1 detik antar item di Timeline
-                );
+                gsap.set(selector, { x: item.x, y: item.y, width: item.w, height: item.h, opacity: 0, scale: 0.95 });
+                tlGrid.to(selector, { opacity: 1, scale: 1, ease: "none",}, index * 0.1);
             });
 
-            // Update tinggi container (Penting agar scroll berfungsi)
+            // 2. Timeline Parallax Ikon (Baru/Diperbaiki)
+            floatingObjects.forEach((obj) => {
+                // Selektor target ikon
+                const targetIcon = sectionRef.current?.querySelector(obj.selector);
+                
+                if (targetIcon) {
+                    // Set posisi awal (menggunakan 'top' dan 'left' CSS)
+                    gsap.set(targetIcon, { 
+                        position: "absolute",
+                        top: obj.y, 
+                        left: `${obj.x}vw`,
+                        zIndex: 1,
+                    });
+
+                    // Animasikan pergerakan vertikal (Parallax) saat Section 3 di-scroll
+                    gsap.to(targetIcon, {
+                        y: -obj.speed * 1000, // Misal, geser 1000px ke atas dengan speed yang ditentukan
+                        ease: "none",
+                        scrollTrigger: {
+                            trigger: sectionRef.current, // Parallax terikat pada Section 3
+                            start: "top bottom",        // Mulai saat section masuk dari bawah
+                            end: "bottom top",          // Berakhir saat section keluar ke atas
+                            scrub: obj.speed,           // Gerakan diikat ke scroll
+                        }
+                    });
+                }
+            });
+
+            // Update tinggi container
             const maxContainerHeight = Math.max(...grid.map(i => i.y + i.h), 0);
             gsap.set(containerRef.current, { height: maxContainerHeight });
             
@@ -164,16 +171,39 @@ export default function Section3() {
         <section 
             ref={sectionRef} 
             id="section3" 
-            className="py-10 px-4 md:px-8 flex justify-center relative overflow-hidden" 
+            // Pastikan overflow-x-hidden untuk mencegah scroll horizontal
+            className="py-10 px-4 md:px-8 flex justify-center relative overflow-x-hidden" 
             style={{ 
-                // Menggunakan Gradient dari FFFFE ke FFFFE (efek putih bersih)
                 backgroundImage: 'linear-gradient(to bottom, #FFFFFE, #FFFFFE)', 
-                backgroundColor: '#FFFFFE', // Fallback warna solid
+                backgroundColor: '#FFFFFE', 
             }}
         >
-            {/* Halaman tidak memerlukan overlay karena background sudah putih/gradient */}
+            
+            {/* WRAPPER IKON MELAYANG */}
+            <div 
+                ref={floatingWrapperRef}
+                className="absolute inset-0 pointer-events-none z-30"
+            >
+                {floatingObjects.map((obj, i) => (
+                    <img
+                        key={i}
+                        src={obj.img}
+                        alt={`Floating Icon ${i + 1}`}
+                        className={`floating-icon-${i+1}`} // Tambahkan class selector untuk GSAP
+                        style={{
+                            // Dikelola oleh GSAP: position: "absolute", top/left/transform
+                            // Kita set ukuran dan zIndex di sini
+                            width: obj.size,
+                            height: obj.size,
+                            zIndex: 1, 
+                            position: "absolute", // Penting: Tetapkan position absolute sebagai fallback/dasar
+                            opacity: 0.8, // Sedikit transparan
+                        }}
+                    />
+                ))}
+            </div>
 
-            <div className="w-full max-w-[1400px] relative z-10"> 
+            <div className="w-full max-w-[1400px] relative z-20"> 
                 <div 
                     ref={containerRef} 
                     className="relative w-full"
@@ -186,7 +216,7 @@ export default function Section3() {
                             className="absolute overflow-hidden rounded-xl shadow-xl cursor-pointer"
                         >
                             <img 
-                                src={item.img} // Menggunakan path lokal /fotoGrid/
+                                src={item.img} 
                                 alt={`Gallery Item ${item.id}`}
                                 className="w-full h-full object-cover"
                                 loading="lazy"
