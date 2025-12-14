@@ -1,30 +1,36 @@
 // Section3.tsx
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-// --- DATA ITEM (MODIFIED: Menghapus ?grayscale) ---
+// Registrasi Plugin GSAP
+gsap.registerPlugin(ScrollTrigger);
+
 const items = [
-    { id: "1", img: "https://picsum.photos/id/1015/600/900", url: "https://example.com/one", height: 900 },
-    { id: "2", img: "https://picsum.photos/id/1011/600/750", url: "https://example.com/two", height: 750 },
-    { id: "3", img: "https://picsum.photos/id/1020/600/800", url: "https://example.com/three", height: 800 },
-    { id: "4", img: "https://picsum.photos/id/1023/600/1000", url: "https://example.com/four", height: 1000 },
-    { id: "5", img: "https://picsum.photos/id/1025/600/700", url: "https://example.com/five", height: 700 },
-    { id: "6", img: "https://picsum.photos/id/1031/600/1100", url: "https://example.com/six", height: 1100 },
-    { id: "7", img: "https://picsum.photos/id/1039/600/700", url: "https://example.com/seven", height: 700 },
-    { id: "8", img: "https://picsum.photos/id/1041/600/850", url: "https://example.com/eight", height: 850 },
-    { id: "9", img: "https://picsum.photos/id/1050/600/950", url: "https://example.com/nine", height: 950 },
-    { id: "10", img: "https://picsum.photos/id/1058/600/700", url: "https://example.com/ten", height: 700 },
+    { id: "1", img: "/fotoGrid/1.jpg", height: 800, width: 600 }, // Rasio 1.5
+    { id: "2", img: "/fotoGrid/2.jpg", height: 900, width: 600 }, // Rasio 1.5
+    { id: "3", img: "/fotoGrid/3.jpg", height: 700, width: 600 }, // Rasio 1.5
+    { id: "4", img: "/fotoGrid/4.jpg", height: 650, width: 600 }, // Rasio 1.5
+    { id: "5", img: "/fotoGrid/5.jpg", height: 1000, width: 600 }, // Rasio 1.5
+    { id: "6", img: "/fotoGrid/6.jpg", height: 800, width: 600 }, // Rasio 1.5
+    { id: "7", img: "/fotoGrid/7.jpg", height: 750, width: 600 }, // Rasio 1.25
+    { id: "8", img: "/fotoGrid/8.jpg", height: 1000, width: 600 }, // Rasio 1.66
+    { id: "9", img: "/fotoGrid/9.jpg", height: 800, width: 600 }, // Rasio 1.33
+    { id: "10", img: "/fotoGrid/10.jpg", height: 700, width: 600 }, // Rasio 1.16
+    { id: "11", img: "/fotoGrid/11.jpg", height: 700, width: 600 }, // Rasio 1.16
+    { id: "12", img: "/fotoGrid/12.jpg", height: 700, width: 600 }, // Rasio 1.16
 ];
 
-// --- INTERFACES & TIPE ---
-
-interface Item { id: string; img: string; height: number; url: string; }
+interface Item { id: string; img: string; height: number; width: number; }
 interface GridItem extends Item { x: number; y: number; w: number; h: number; }
 
-// --- HOOKS & UTILITIES ---
+// --- HOOKS & UTILITIES (Untuk Responsive & Pengukuran) ---
 
 const useMedia = (queries: string[], values: number[], defaultValue: number): number => {
-    const get = () => values[queries.findIndex(q => matchMedia(q).matches)] ?? defaultValue;
+    const get = () => {
+        if (typeof window === 'undefined') return defaultValue;
+        return values[queries.findIndex(q => matchMedia(q).matches)] ?? defaultValue;
+    };
     const [value, setValue] = useState<number>(get);
     useEffect(() => {
         const handler = () => setValue(get);
@@ -49,141 +55,146 @@ const useMeasure = <T extends HTMLElement>() => {
     return [ref, size] as const;
 };
 
-const preloadImages = async (urls: string[]): Promise<void> => {
-    await Promise.all(
-        urls.map(
-            src =>
-                new Promise<void>(resolve => {
-                    const img = new Image();
-                    img.src = src;
-                    img.onload = img.onerror = () => resolve();
-                })
-        )
-    );
-};
-
 export default function Section3() {
     
-    // --- KONFIGURASI MASONRY ---
-    const ease = 'power3.out';
-    const duration = 0.6;
-    const stagger = 0.05;
-    const scaleOnHover = true;
-    const hoverScale = 0.95;
-    const blurToFocus = true;
-    const colorShiftOnHover = false;
-    
-    // --- HOOKS & STATE ---
+    // Konfigurasi Grid
+    const isMobile = useMedia(['(max-width: 600px)'], [1], 0) === 1;
     const columns = useMedia(
-        ['(min-width:1500px)', '(min-width:1000px)', '(min-width:600px)', '(min-width:400px)'],
-        [5, 4, 3, 2],
-        1
+        ['(min-width:1200px)', '(min-width:768px)', '(min-width:400px)'],
+        [4, 3, 2], 
+        2
     );
-
-    const [containerRef, { width }] = useMeasure<HTMLDivElement>();
-    const [imagesReady, setImagesReady] = useState(false);
-    const hasMounted = useRef(false);
+    const gap = isMobile ? 10 : 24; 
     
-    useEffect(() => {
-        // Memuat URL gambar yang sudah berwarna
-        preloadImages(items.map(i => i.img)).then(() => setImagesReady(true));
-    }, [items]);
+    // State dan Refs
+    const [containerRef, { width }] = useMeasure<HTMLDivElement>();
+    const [isReady, setIsReady] = useState(false);
+    const sectionRef = useRef<HTMLElement>(null); 
 
-    // Logika Utama Masonry Grid
+    // Preload & State Ready
+    useEffect(() => {
+        // Logika preload disederhanakan karena menggunakan path lokal
+        setIsReady(true);
+    }, []);
+
+    // Logika Masonry Grid (Menghitung posisi X, Y, W, H)
     const grid = useMemo<GridItem[]>(() => {
         if (!width) return [];
+        
         const colHeights = new Array(columns).fill(0);
-        const gap = 16;
         const totalGaps = (columns - 1) * gap;
         const columnWidth = (width - totalGaps) / columns;
         
-        const heightDivider = columns <= 2 ? 2.5 : 2; 
-
         return items.map(child => {
             const col = colHeights.indexOf(Math.min(...colHeights));
             const x = col * (columnWidth + gap);
-            const height = child.height / heightDivider; 
             const y = colHeights[col];
+            
+            // Hitung tinggi berdasarkan Aspect Ratio
+            const aspectRatio = child.height / child.width;
+            const height = columnWidth * aspectRatio;
 
             colHeights[col] += height + gap;
             
-            return { ...child, x, y, w: columnWidth, h: height };
+            return { 
+                ...child, 
+                x, 
+                y, 
+                w: columnWidth, 
+                h: height 
+            };
         });
-    }, [columns, items, width]);
+    }, [columns, width, gap]);
 
+    // --- LOGIKA ANIMASI SCROLL SCRUBBING STAGGERED ---
     useLayoutEffect(() => {
-        if (!imagesReady) return;
+        if (!isReady || grid.length === 0) return;
 
-        grid.forEach((item, index) => {
-            const selector = `[data-key="${item.id}"]`;
-            const animProps = { x: item.x, y: item.y, width: item.w, height: item.h };
+        ScrollTrigger.getAll().forEach(t => t.kill());
 
-            if (!hasMounted.current) {
-                // Animasi Awal: Fade-in
-                gsap.fromTo(
-                    selector,
-                    { opacity: 0, ...animProps, ...(blurToFocus && { filter: 'blur(10px)' }) },
-                    { opacity: 1, ...animProps, ...(blurToFocus && { filter: 'blur(0px)' }), duration: 0.8, ease: 'power3.out', delay: index * stagger }
+        const ctx = gsap.context(() => {
+            
+            // 1. Timeline utama yang dikontrol oleh ScrollTrigger
+            const tl = gsap.timeline({
+                scrollTrigger: {
+                    trigger: containerRef.current, // Kontainer grid adalah pemicu
+                    start: "top bottom",          
+                    end: "bottom center",         
+                    scrub: true,                  // Scrubbing: Mengikat animasi ke progres scroll
+                }
+            });
+
+            // 2. Loop dan Tambahkan animasi Fade-in ke Timeline
+            grid.forEach((item, index) => { 
+                const selector = `[data-key="${item.id}"]`;
+                
+                // Set posisi Grid (target) dan opacity awal 0
+                gsap.set(selector, { 
+                    x: item.x, 
+                    y: item.y,
+                    width: item.w, 
+                    height: item.h,
+                    opacity: 0,
+                    scale: 0.95, // Sedikit zoom-in saat muncul
+                });
+
+                // Tambahkan animasi Fade-in ke Timeline
+                tl.to(selector, 
+                    {
+                        opacity: 1, 
+                        scale: 1, 
+                        ease: "none",
+                    },
+                    index * 0.1 // Kunci Stagger: Jeda 0.1 detik antar item di Timeline
                 );
-            } else {
-                // Animasi Update/Resize
-                gsap.to(selector, { ...animProps, duration, ease, overwrite: 'auto' });
-            }
-        });
+            });
 
-        // Mengatur tinggi container
-        const maxContainerHeight = Math.max(...grid.map(i => i.y + i.h), 0);
-        gsap.to(containerRef.current, { height: maxContainerHeight, duration, ease, overwrite: 'auto' });
-        gsap.set(containerRef.current, { width: '100%' }); 
+            // Update tinggi container (Penting agar scroll berfungsi)
+            const maxContainerHeight = Math.max(...grid.map(i => i.y + i.h), 0);
+            gsap.set(containerRef.current, { height: maxContainerHeight });
+            
+        }, sectionRef); 
 
-        hasMounted.current = true;
-    }, [grid, imagesReady, stagger, blurToFocus, duration, ease]);
+        return () => ctx.revert(); 
 
-    // --- INTERAKSI HOVER ---
-    const handleMouseEnter = (id: string, element: HTMLElement) => {
-        if (scaleOnHover) { gsap.to(`[data-key="${id}"]`, { scale: hoverScale, duration: 0.3, ease: 'power2.out' }); }
-        if (colorShiftOnHover) { const overlay = element.querySelector('.color-overlay') as HTMLElement; if (overlay) gsap.to(overlay, { opacity: 0.3, duration: 0.3 }); }
-    };
-    const handleMouseLeave = (id: string, element: HTMLElement) => {
-        if (scaleOnHover) { gsap.to(`[data-key="${id}"]`, { scale: 1, duration: 0.3, ease: 'power2.out' }); }
-        if (colorShiftOnHover) { const overlay = element.querySelector('.color-overlay') as HTMLElement; if (overlay) gsap.to(overlay, { opacity: 0, duration: 0.3 }); }
-    };
-
+    }, [grid, isReady]);
 
     // --- RENDER SECTION 3 ---
     return (
         <section 
+            ref={sectionRef} 
             id="section3" 
-            className="p-4 sm:p-8 bg-gray-50 min-h-[100vh] flex flex-col items-center bg-white"
-        >   
-            <div className="w-full max-w-[1500px] px-2 sm:px-0">
+            className="py-10 px-4 md:px-8 flex justify-center relative overflow-hidden" 
+            style={{ 
+                // Menggunakan Gradient dari FFFFE ke FFFFE (efek putih bersih)
+                backgroundImage: 'linear-gradient(to bottom, #FFFFFE, #FFFFFE)', 
+                backgroundColor: '#FFFFFE', // Fallback warna solid
+            }}
+        >
+            {/* Halaman tidak memerlukan overlay karena background sudah putih/gradient */}
+
+            <div className="w-full max-w-[1400px] relative z-10"> 
                 <div 
                     ref={containerRef} 
-                    className="relative w-full transition-all duration-300"
-                    style={{ willChange: 'height, transform' }} 
+                    className="relative w-full"
+                    style={{ willChange: 'height' }} 
                 >
                     {grid.map(item => (
                         <div
-                            key={item.id} data-key={item.id}
-                            className="absolute cursor-pointer transform-gpu"
-                            style={{ willChange: 'transform, width, height, opacity' }}
-                            onMouseEnter={e => handleMouseEnter(item.id, e.currentTarget)}
-                            onMouseLeave={e => handleMouseLeave(item.id, e.currentTarget)}
+                            key={item.id}
+                            data-key={item.id}
+                            className="absolute overflow-hidden rounded-xl shadow-xl cursor-pointer"
                         >
-                            <div
-                                className="relative w-full h-full bg-cover bg-center rounded-[10px] shadow-[0px_10px_50px_-10px_rgba(0,0,0,0.2)]"
-                                style={{ backgroundImage: `url(${item.img})` }}
-                            >
-                                {colorShiftOnHover && (
-                                    <div className="color-overlay absolute inset-0 rounded-[10px] bg-gradient-to-tr from-pink-500/50 to-sky-500/50 opacity-0 pointer-events-none" />
-                                )}
-                            </div>
+                            <img 
+                                src={item.img} // Menggunakan path lokal /fotoGrid/
+                                alt={`Gallery Item ${item.id}`}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                            />
                         </div>
                     ))}
                 </div>
             </div>
-            
-            <div className="h-20" /> 
         </section>
     );
 }
