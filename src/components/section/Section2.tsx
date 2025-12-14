@@ -1,12 +1,11 @@
-// Section2.tsx (RESOLVED: Menggabungkan perbaikan TS dan Background Putih)
+// Section2.tsx (MENGEMBALIKAN BACKGROUND AWAN)
 import { useState, useEffect } from "react";
 
 export default function Section2() {
-  // State untuk menangani logika buka/tutup (default: true)
-  const [isOpened, setIsOpened] = useState(true);
+  // State untuk menangani logika buka/tutup
+  const [isOpened, setIsOpened] = useState(false); // Menggunakan false, pastikan ini yang Anda inginkan
   // State BARU untuk Music Player
   const [music, setMusic] = useState<HTMLAudioElement | null>(null);
-  // State isMusicInitialized telah dihapus karena tidak digunakan
 
   // 1. Inisialisasi Audio saat komponen mounting
   useEffect(() => {
@@ -14,10 +13,8 @@ export default function Section2() {
     audio.loop = true;
     audio.volume = 0.7;
     setMusic(audio);
-    // Penggunaan setIsMusicInitialized(true) dihapus karena tidak digunakan
 
     return () => {
-      // Cleanup: hentikan musik saat komponen di-unmount
       audio.pause();
       audio.currentTime = 0;
     };
@@ -31,19 +28,14 @@ export default function Section2() {
   
   // 2. Fungsi Toggle yang MEMUTAR / PAUSE MUSIK
   const handleToggle = () => {
-    // Ubah state buka/tutup kartu
     setIsOpened(!isOpened);
     
-    // Logika Play / Pause Musik (TETAP SAMA)
     if (music) {
-        // Cek status paused dari elemen audio
         if (music.paused) {
-            // Jika musik sedang PAUSE, maka PLAY
             music.play().catch(error => {
                 console.warn("Play failed:", error);
             });
         } else {
-            // Jika musik sedang PLAY, maka PAUSE
             music.pause();
         }
     }
@@ -52,10 +44,15 @@ export default function Section2() {
 
   return (
     <section
-      className="relative w-full h-[130vh] overflow-hidden bg-[#FFFFFE]" // <-- BG PUTIH DI SINI
+      className="relative w-full h-[130vh] overflow-hidden" // <-- Hapus bg-[#FFFFFE]
       id="section2"
     >
-      {/* Background Image: DIHAPUS */}
+      {/* Background Image: DIKEMBALIKAN */}
+      <img
+        src="/Awan4.png"
+        alt="Background Cloud"
+        className="absolute inset-0 w-full h-full object-cover z-0"
+      />
 
       {/* Main Container: Centering Cards & Nav */}
       <div className="absolute inset-0 z-10 flex flex-col justify-center items-center pointer-events-none">
